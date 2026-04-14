@@ -25,7 +25,12 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 data_path = os.path.join(current_dir, 'MNIST.csv')
 
 if not os.path.exists(data_path):
-    data_path = 'MNIST.csv'
+    data_path = os.path.join(os.getcwd(), 'MNIST.csv')
+
+if not os.path.exists(data_path):
+    data_path = os.path.join(os.getcwd(), 'mlops ass5', 'MNIST.csv')
+
+print(f"Attempting to load data from: {data_path}")
 
 df = pd.read_csv(data_path, header=0)
 labels = df.iloc[:, 0]
@@ -43,7 +48,7 @@ X_test_scaled = scaler.transform(X_test)
 
 with mlflow.start_run():
     model = Sequential([
-       Flatten(input_shape=(64,)), 
+        Flatten(input_shape=(64,)), 
         Dense(128, activation='relu'),
         Dense(64, activation='relu'),
         Dense(10, activation='softmax')
