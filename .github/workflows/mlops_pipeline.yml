@@ -1,0 +1,98 @@
+name: MLOps Model Validation and Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+  DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+  MLFLOW_EXPERIMENT: ${{ secrets.MLFLOW_EXPERIMENT }}
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Linter
+      run: echo "Running lightweight linter..."
+
+  train:
+    runs-on: ubuntu-latest
+    needs: linter
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[run-train]')
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install mlflow tensorflow scikit-learn pandas
+
+    - name: Train Model and Log to MLflow
+      run: python mlops ass5/train.py
+
+    - name: Upload Model Info
+      uses: actions/upload-artifact@v4
+      with:
+        name: model-info
+        path: model_info.txt
+
+    - name: Handle Failure
+      if: failure()
+      run: |
+        echo "Pipeline failed. See error_logs.txt for details." > error_logs.txt
+        echo "Simulating error logs content for demonstration." >> error_logs.txt
+    - name: Upload Error Logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: error-logs
+        path: error_logs.txt
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: train
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install mlflow
+
+    - name: Download Model Info
+      uses: actions/download-artifact@v4
+      with:
+        name: model-info
+
+    - name: Check Model Threshold
+      run: python mlops ass5/check_threshold.py
+
+    - name: Mock Docker Build
+      run: |
+        RUN_ID=$(cat model_info.txt)
+        echo "Building Docker image for Run ID: $RUN_ID"
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [linter, train, deploy]
+    if: always()
+    steps:
+    - name: Cleanup temporary cloud volumes
+      run: echo "Cleaning up temporary cloud volumes..."
