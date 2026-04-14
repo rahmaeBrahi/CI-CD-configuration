@@ -22,15 +22,12 @@ if MLFLOW_EXPERIMENT:
     mlflow.set_experiment(MLFLOW_EXPERIMENT)
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(current_dir, 'MNIST.csv')
+data_path = os.path.join(current_dir, 'mlops', 'MNIST.csv')
 
 if not os.path.exists(data_path):
-    data_path = os.path.join(os.getcwd(), 'MNIST.csv')
+    data_path = os.path.join(os.getcwd(), 'mlops ass5', 'mlops', 'MNIST.csv')
 
-if not os.path.exists(data_path):
-    data_path = os.path.join(os.getcwd(), 'mlops ass5', 'MNIST.csv')
-
-print(f"Attempting to load data from: {data_path}")
+print(f"Loading data from: {data_path}")
 
 df = pd.read_csv(data_path, header=0)
 labels = df.iloc[:, 0]
