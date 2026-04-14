@@ -21,7 +21,9 @@ if DATABRICKS_HOST and DATABRICKS_TOKEN:
 if MLFLOW_EXPERIMENT:
     mlflow.set_experiment(MLFLOW_EXPERIMENT)
 
-data_path = os.path.join('mlops', 'MNIST.csv')
+current_dir = os.path.dirname(os.path.abspath(__file__))
+data_path = os.path.join(current_dir, 'MNIST.csv')
+
 if not os.path.exists(data_path):
     data_path = 'MNIST.csv'
 
@@ -31,7 +33,6 @@ images = df.iloc[:, 1:].values
 
 images = images.reshape(-1, 8, 8, 1).astype('float32')
 images = images / 255.0 
-
 images_flat = images.reshape(images.shape[0], -1)
 
 X_train, X_test, y_train, y_test = train_test_split(images_flat, labels, test_size=0.2, random_state=42)
@@ -42,18 +43,17 @@ X_test_scaled = scaler.transform(X_test)
 
 with mlflow.start_run():
     model = Sequential([
-        Flatten(input_shape=(64,)), 
-        
-        Dense(2, activation='relu'),
-        Dense(10, activation='softmax') 
+       Flatten(input_shape=(64,)), 
+        Dense(128, activation='relu'),
+        Dense(64, activation='relu'),
+        Dense(10, activation='softmax')
     ])
 
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
     model.fit(X_train_scaled, y_train, epochs=5, batch_size=32, verbose=0)
 
     loss, accuracy = model.evaluate(X_test_scaled, y_test, verbose=0)
-    print(f"modle acurcy: {accuracy:.4f}")
+    print(f"Model accuracy: {accuracy:.4f}")
 
     mlflow.log_param("epochs", 5)
     mlflow.log_param("batch_size", 32)
@@ -63,8 +63,9 @@ with mlflow.start_run():
     mlflow.tensorflow.log_model(model, "mnist_classifier")
 
     run_id = mlflow.active_run().info.run_id
-    print(f"mlflo run id is: {run_id}")
+    print(f"MLflow run ID is: {run_id}")
+    
     with open('model_info.txt', 'w') as f:
         f.write(run_id)
 
-print("traning finish and run id save to file")
+print("Training finished and run ID saved to file.")

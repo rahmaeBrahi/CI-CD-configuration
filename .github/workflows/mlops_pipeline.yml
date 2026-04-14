@@ -39,7 +39,7 @@ jobs:
         pip install mlflow tensorflow scikit-learn pandas
 
     - name: Train Model and Log to MLflow
-      run: python mlops ass5/train.py
+      run: python "mlops ass5/train.py"
 
     - name: Upload Model Info
       uses: actions/upload-artifact@v4
@@ -82,7 +82,7 @@ jobs:
         name: model-info
 
     - name: Check Model Threshold
-      run: python mlops ass5/check_threshold.py
+      run: python "mlops ass5/check_threshold.py"
 
     - name: Mock Docker Build
       run: |
